@@ -1,4 +1,8 @@
+import React from "react";
+
 export default function App() {
+  console.log("APP RENDERED");
+
   return (
     <div
       style={{
@@ -14,7 +18,7 @@ export default function App() {
       </h1>
 
       <p>
-        JSX is back. The app is stable.
+        React is rendering correctly.
       </p>
     </div>
   );
