@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState("launchpad");
   const [showDeploy, setShowDeploy] = useState(false);
   const [showVamp, setShowVamp] = useState(false);
   const [tokens, setTokens] = useState([]);
@@ -12,7 +13,6 @@ export default function App() {
         name: data.name,
         ticker: data.ticker,
         icon: data.icon,
-        creator: "You",
         progress: 0,
         price: 0.0001,
       },
@@ -23,36 +23,49 @@ export default function App() {
   }
 
   function buyToken(id) {
-    setTokens(tokens.map(t => {
-      if (t.id !== id) return t;
-      const newProgress = Math.min(t.progress + 5, 100);
-      return {
-        ...t,
-        progress: newProgress,
-        price: +(t.price * 1.08).toFixed(6),
-      };
-    }));
+    setTokens(tokens.map(t =>
+      t.id === id
+        ? {
+            ...t,
+            progress: Math.min(t.progress + 5, 100),
+            price: +(t.price * 1.08).toFixed(6),
+          }
+        : t
+    ));
   }
 
   function sellToken(id) {
-    setTokens(tokens.map(t => {
-      if (t.id !== id) return t;
-      const newProgress = Math.max(t.progress - 5, 0);
-      return {
-        ...t,
-        progress: newProgress,
-        price: +(t.price * 0.92).toFixed(6),
-      };
-    }));
+    setTokens(tokens.map(t =>
+      t.id === id
+        ? {
+            ...t,
+            progress: Math.max(t.progress - 5, 0),
+            price: +(t.price * 0.92).toFixed(6),
+          }
+        : t
+    ));
   }
 
   return (
     <div style={styles.app}>
-      {/* HEADER */}
-      <header style={styles.header}>
+      {/* TOP BAR */}
+      <header style={styles.topBar}>
         <div style={styles.brand}>
           <div style={styles.logo}>🧪</div>
           <span style={styles.title}>PASTE</span>
+        </div>
+
+        <div style={styles.tabs}>
+          <Tab
+            label="Launchpad"
+            active={activeTab === "launchpad"}
+            onClick={() => setActiveTab("launchpad")}
+          />
+          <Tab
+            label="Live Feed"
+            active={activeTab === "feed"}
+            onClick={() => setActiveTab("feed")}
+          />
         </div>
 
         <div style={styles.actions}>
@@ -65,53 +78,64 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN */}
+      {/* CONTENT */}
       <main style={styles.main}>
-        {tokens.length === 0 && (
-          <div style={styles.empty}>
-            No coins yet.
-            <br />
-            Deploy the first one.
-          </div>
+        {activeTab === "launchpad" && (
+          <>
+            {tokens.length === 0 && (
+              <div style={styles.empty}>
+                No coins yet.
+                <br />
+                Deploy the first one.
+              </div>
+            )}
+
+            <div style={styles.grid}>
+              {tokens.map(t => (
+                <div key={t.id} style={styles.card}>
+                  {t.icon && <img src={t.icon} style={styles.cardIcon} />}
+                  <strong>{t.name}</strong>
+                  <div style={styles.ticker}>{t.ticker}</div>
+
+                  <div style={styles.price}>◎ {t.price}</div>
+
+                  <div style={styles.progressBar}>
+                    <div
+                      style={{
+                        ...styles.progressFill,
+                        width: `${t.progress}%`,
+                      }}
+                    />
+                  </div>
+
+                  <div style={styles.tradeRow}>
+                    <button style={styles.buyBtn} onClick={() => buyToken(t.id)}>
+                      Buy
+                    </button>
+                    <button
+                      style={styles.sellBtn}
+                      onClick={() => sellToken(t.id)}
+                    >
+                      Sell
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
-        <div style={styles.grid}>
-          {tokens.map(t => (
-            <div key={t.id} style={styles.card}>
-              {t.icon && <img src={t.icon} alt="" style={styles.cardIcon} />}
-
-              <strong>{t.name}</strong>
-              <div style={styles.ticker}>{t.ticker}</div>
-
-              <div style={styles.price}>
-                Price: ◎ {t.price}
-              </div>
-
-              {/* PROGRESS BAR */}
-              <div style={styles.progressBar}>
-                <div
-                  style={{
-                    ...styles.progressFill,
-                    width: `${t.progress}%`,
-                  }}
-                />
-              </div>
-
-              <div style={styles.progressText}>
-                Bonding curve: {t.progress}%
-              </div>
-
-              <div style={styles.tradeRow}>
-                <button style={styles.buyBtn} onClick={() => buyToken(t.id)}>
-                  Buy
-                </button>
-                <button style={styles.sellBtn} onClick={() => sellToken(t.id)}>
-                  Sell
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        {activeTab === "feed" && (
+          <div style={styles.feedPlaceholder}>
+            <h2>Live X Feed</h2>
+            <p>
+              This is where live crypto posts from X will appear.
+            </p>
+            <p style={{ color: "#666" }}>
+              (Next step)
+            </p>
+          </div>
+        )}
       </main>
 
       {showDeploy && (
@@ -129,15 +153,27 @@ export default function App() {
   );
 }
 
-/* =======================
-   COMPONENTS
-======================= */
+/* ===== COMPONENTS ===== */
+
+function Tab({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...styles.tab,
+        ...(active ? styles.tabActive : {}),
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
 function Modal({ title, children, onClose }) {
   return (
     <div style={styles.backdrop}>
       <div style={styles.modal}>
-        <h2 style={{ marginBottom: 12 }}>{title}</h2>
+        <h3>{title}</h3>
         {children}
         <button style={styles.cancel} onClick={onClose}>
           Cancel
@@ -162,89 +198,81 @@ function DeployForm({ onSubmit }) {
 
   return (
     <>
-      <input
-        style={styles.input}
-        placeholder="Token name"
-        value={name}
-        onChange={e => setName(e.target.value)}
-      />
-      <input
-        style={styles.input}
-        placeholder="Ticker"
-        value={ticker}
-        onChange={e => setTicker(e.target.value)}
-      />
-
-      <div style={{ marginBottom: 12 }}>
-        {icon && <img src={icon} alt="" style={styles.preview} />}
-        <input type="file" accept="image/*" onChange={handleImage} />
-      </div>
-
-      <button
-        style={styles.confirm}
-        onClick={() => onSubmit({ name, ticker, icon })}
-      >
+      <input style={styles.input} placeholder="Token name" onChange={e => setName(e.target.value)} />
+      <input style={styles.input} placeholder="Ticker" onChange={e => setTicker(e.target.value)} />
+      <input type="file" accept="image/*" onChange={handleImage} />
+      <button style={styles.confirm} onClick={() => onSubmit({ name, ticker, icon })}>
         Confirm
       </button>
     </>
   );
 }
 
-/* =======================
-   STYLES
-======================= */
+/* ===== STYLES ===== */
 
 const green = "#22c55e";
 
 const styles = {
   app: {
     minHeight: "100vh",
-    background: "#000",
+    background: "linear-gradient(180deg,#0a0a0a,#000)",
     color: "#fff",
     fontFamily: "Inter, system-ui",
   },
-  header: {
+  topBar: {
     display: "flex",
+    alignItems: "center",
     justifyContent: "space-between",
-    padding: "20px 32px",
+    padding: "14px 24px",
     borderBottom: "1px solid #111",
   },
-  brand: { display: "flex", gap: 12, alignItems: "center" },
+  brand: { display: "flex", gap: 10, alignItems: "center" },
   logo: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
     background: green,
     color: "#000",
     fontWeight: 900,
+    borderRadius: 8,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
-  title: { fontSize: 22, fontWeight: 800 },
-  actions: { display: "flex", gap: 12 },
+  title: { fontWeight: 800 },
+  tabs: { display: "flex", gap: 16 },
+  tab: {
+    background: "transparent",
+    border: "none",
+    color: "#777",
+    fontSize: 14,
+    cursor: "pointer",
+  },
+  tabActive: {
+    color: green,
+    borderBottom: `2px solid ${green}`,
+  },
+  actions: { display: "flex", gap: 10 },
   deployBtn: {
     background: green,
-    color: "#000",
     border: "none",
-    padding: "10px 18px",
-    borderRadius: 12,
+    padding: "8px 14px",
+    borderRadius: 10,
     fontWeight: 700,
     cursor: "pointer",
   },
   vampBtn: {
     background: "#111",
     border: "1px solid #222",
-    padding: "10px 18px",
-    borderRadius: 12,
+    padding: "8px 14px",
+    borderRadius: 10,
     color: "#fff",
     cursor: "pointer",
   },
-  main: { padding: 32, maxWidth: 1100, margin: "0 auto" },
+  main: { padding: 24, maxWidth: 1200, margin: "0 auto" },
   empty: { textAlign: "center", color: "#777", marginTop: 80 },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(240px,1fr))",
     gap: 20,
   },
   card: {
@@ -254,52 +282,50 @@ const styles = {
     padding: 16,
   },
   cardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 10,
-    objectFit: "cover",
-    marginBottom: 8,
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    marginBottom: 6,
   },
-  ticker: { color: "#777", marginBottom: 6 },
-  price: { marginTop: 6, fontSize: 14 },
+  ticker: { color: "#777" },
+  price: { marginTop: 6 },
   progressBar: {
-    height: 8,
+    height: 6,
     background: "#222",
     borderRadius: 4,
     marginTop: 10,
-    overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    background: "linear-gradient(90deg,#22c55e,#16a34a)",
-  },
-  progressText: {
-    fontSize: 12,
-    color: "#777",
-    marginTop: 6,
+    background: green,
   },
   tradeRow: {
     display: "flex",
-    gap: 10,
+    gap: 8,
     marginTop: 12,
   },
   buyBtn: {
     flex: 1,
     background: green,
     border: "none",
-    padding: 10,
-    borderRadius: 10,
-    fontWeight: 700,
+    borderRadius: 8,
+    padding: 8,
     cursor: "pointer",
   },
   sellBtn: {
     flex: 1,
     background: "#111",
     border: "1px solid #222",
-    padding: 10,
-    borderRadius: 10,
+    borderRadius: 8,
+    padding: 8,
     color: "#fff",
     cursor: "pointer",
+  },
+  feedPlaceholder: {
+    padding: 60,
+    border: "1px dashed #222",
+    borderRadius: 16,
+    textAlign: "center",
   },
   backdrop: {
     position: "fixed",
@@ -311,42 +337,34 @@ const styles = {
   },
   modal: {
     background: "#0b0b0b",
-    borderRadius: 18,
-    padding: 24,
-    width: 340,
+    borderRadius: 16,
+    padding: 20,
+    width: 320,
     border: "1px solid #222",
   },
   input: {
     width: "100%",
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
     background: "#111",
     border: "1px solid #222",
+    borderRadius: 8,
     color: "#fff",
-  },
-  preview: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
-    marginBottom: 8,
   },
   confirm: {
     width: "100%",
-    padding: 12,
-    borderRadius: 10,
+    padding: 10,
     background: green,
-    color: "#000",
-    fontWeight: 700,
     border: "none",
+    borderRadius: 8,
+    fontWeight: 700,
     cursor: "pointer",
-    marginBottom: 8,
   },
   cancel: {
     width: "100%",
     background: "transparent",
     border: "none",
-    color: "#777",
-    cursor: "pointer",
+    color: "#666",
+    marginTop: 6,
   },
 };
