@@ -11,6 +11,7 @@ export default function App() {
         id: Date.now(),
         name: data.name,
         ticker: data.ticker,
+        icon: data.icon,
         creator: "You",
       },
       ...tokens,
@@ -51,11 +52,16 @@ export default function App() {
         <div style={styles.grid}>
           {tokens.map((t) => (
             <div key={t.id} style={styles.card}>
+              {t.icon && (
+                <img
+                  src={t.icon}
+                  alt="icon"
+                  style={styles.cardIcon}
+                />
+              )}
               <strong>{t.name}</strong>
               <div style={{ color: "#777" }}>{t.ticker}</div>
-              <div style={{ fontSize: 12, marginTop: 8 }}>
-                Creator: {t.creator}
-              </div>
+              <div style={styles.creator}>Creator: {t.creator}</div>
             </div>
           ))}
         </div>
@@ -84,7 +90,7 @@ function Modal({ title, children, onClose }) {
   return (
     <div style={styles.backdrop}>
       <div style={styles.modal}>
-        <h2>{title}</h2>
+        <h2 style={{ marginBottom: 12 }}>{title}</h2>
         {children}
         <button style={styles.cancel} onClick={onClose}>
           Cancel
@@ -97,6 +103,16 @@ function Modal({ title, children, onClose }) {
 function DeployForm({ onSubmit }) {
   const [name, setName] = useState("");
   const [ticker, setTicker] = useState("");
+  const [icon, setIcon] = useState(null);
+
+  function handleImage(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => setIcon(reader.result);
+    reader.readAsDataURL(file);
+  }
 
   return (
     <>
@@ -106,15 +122,33 @@ function DeployForm({ onSubmit }) {
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
+
       <input
         style={styles.input}
         placeholder="Ticker"
         value={ticker}
         onChange={(e) => setTicker(e.target.value)}
       />
+
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: "#777", marginBottom: 6 }}>
+          Token Icon
+        </div>
+
+        {icon && (
+          <img
+            src={icon}
+            alt="preview"
+            style={styles.preview}
+          />
+        )}
+
+        <input type="file" accept="image/*" onChange={handleImage} />
+      </div>
+
       <button
         style={styles.confirm}
-        onClick={() => onSubmit({ name, ticker })}
+        onClick={() => onSubmit({ name, ticker, icon })}
       >
         Confirm
       </button>
@@ -185,6 +219,18 @@ const styles = {
     borderRadius: 14,
     padding: 16,
   },
+  cardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    objectFit: "cover",
+    marginBottom: 8,
+  },
+  creator: {
+    fontSize: 12,
+    color: "#777",
+    marginTop: 6,
+  },
   backdrop: {
     position: "fixed",
     inset: 0,
@@ -197,7 +243,7 @@ const styles = {
     background: "#0b0b0b",
     borderRadius: 18,
     padding: 24,
-    width: 320,
+    width: 340,
     border: "1px solid #222",
   },
   input: {
@@ -208,6 +254,14 @@ const styles = {
     background: "#111",
     border: "1px solid #222",
     color: "#fff",
+  },
+  preview: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    objectFit: "cover",
+    marginBottom: 8,
+    border: "1px solid #222",
   },
   confirm: {
     width: "100%",
