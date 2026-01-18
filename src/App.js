@@ -1,8 +1,9 @@
 export default function App() {
-  return (
-    <div style={{ background: "black", minHeight: "100vh", color: "white", padding: 40 }}>
-      <h1 style={{ color: "#22c55e" }}>PASTE</h1>
-      <p>Vercel-ready Vite + React setup</p>
-    </div>
-  );
+  const el = document.createElement("div");
+  el.style.background = "black";
+  el.style.minHeight = "100vh";
+  el.style.color = "#22c55e";
+  el.style.padding = "40px";
+  el.innerText = "PASTE — deployed successfully";
+  return el;
 }
