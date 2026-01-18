@@ -13,11 +13,37 @@ export default function App() {
         ticker: data.ticker,
         icon: data.icon,
         creator: "You",
+        progress: 0,
+        price: 0.0001,
       },
       ...tokens,
     ]);
     setShowDeploy(false);
     setShowVamp(false);
+  }
+
+  function buyToken(id) {
+    setTokens(tokens.map(t => {
+      if (t.id !== id) return t;
+      const newProgress = Math.min(t.progress + 5, 100);
+      return {
+        ...t,
+        progress: newProgress,
+        price: +(t.price * 1.08).toFixed(6),
+      };
+    }));
+  }
+
+  function sellToken(id) {
+    setTokens(tokens.map(t => {
+      if (t.id !== id) return t;
+      const newProgress = Math.max(t.progress - 5, 0);
+      return {
+        ...t,
+        progress: newProgress,
+        price: +(t.price * 0.92).toFixed(6),
+      };
+    }));
   }
 
   return (
@@ -50,18 +76,39 @@ export default function App() {
         )}
 
         <div style={styles.grid}>
-          {tokens.map((t) => (
+          {tokens.map(t => (
             <div key={t.id} style={styles.card}>
-              {t.icon && (
-                <img
-                  src={t.icon}
-                  alt="icon"
-                  style={styles.cardIcon}
-                />
-              )}
+              {t.icon && <img src={t.icon} alt="" style={styles.cardIcon} />}
+
               <strong>{t.name}</strong>
-              <div style={{ color: "#777" }}>{t.ticker}</div>
-              <div style={styles.creator}>Creator: {t.creator}</div>
+              <div style={styles.ticker}>{t.ticker}</div>
+
+              <div style={styles.price}>
+                Price: ◎ {t.price}
+              </div>
+
+              {/* PROGRESS BAR */}
+              <div style={styles.progressBar}>
+                <div
+                  style={{
+                    ...styles.progressFill,
+                    width: `${t.progress}%`,
+                  }}
+                />
+              </div>
+
+              <div style={styles.progressText}>
+                Bonding curve: {t.progress}%
+              </div>
+
+              <div style={styles.tradeRow}>
+                <button style={styles.buyBtn} onClick={() => buyToken(t.id)}>
+                  Buy
+                </button>
+                <button style={styles.sellBtn} onClick={() => sellToken(t.id)}>
+                  Sell
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -108,7 +155,6 @@ function DeployForm({ onSubmit }) {
   function handleImage(e) {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = () => setIcon(reader.result);
     reader.readAsDataURL(file);
@@ -120,29 +166,17 @@ function DeployForm({ onSubmit }) {
         style={styles.input}
         placeholder="Token name"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={e => setName(e.target.value)}
       />
-
       <input
         style={styles.input}
         placeholder="Ticker"
         value={ticker}
-        onChange={(e) => setTicker(e.target.value)}
+        onChange={e => setTicker(e.target.value)}
       />
 
       <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 12, color: "#777", marginBottom: 6 }}>
-          Token Icon
-        </div>
-
-        {icon && (
-          <img
-            src={icon}
-            alt="preview"
-            style={styles.preview}
-          />
-        )}
-
+        {icon && <img src={icon} alt="" style={styles.preview} />}
         <input type="file" accept="image/*" onChange={handleImage} />
       </div>
 
@@ -206,17 +240,17 @@ const styles = {
     color: "#fff",
     cursor: "pointer",
   },
-  main: { padding: 32, maxWidth: 1000, margin: "0 auto" },
+  main: { padding: 32, maxWidth: 1100, margin: "0 auto" },
   empty: { textAlign: "center", color: "#777", marginTop: 80 },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
     gap: 20,
   },
   card: {
     background: "#0b0b0b",
     border: "1px solid #222",
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
   },
   cardIcon: {
@@ -226,10 +260,46 @@ const styles = {
     objectFit: "cover",
     marginBottom: 8,
   },
-  creator: {
+  ticker: { color: "#777", marginBottom: 6 },
+  price: { marginTop: 6, fontSize: 14 },
+  progressBar: {
+    height: 8,
+    background: "#222",
+    borderRadius: 4,
+    marginTop: 10,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    background: "linear-gradient(90deg,#22c55e,#16a34a)",
+  },
+  progressText: {
     fontSize: 12,
     color: "#777",
     marginTop: 6,
+  },
+  tradeRow: {
+    display: "flex",
+    gap: 10,
+    marginTop: 12,
+  },
+  buyBtn: {
+    flex: 1,
+    background: green,
+    border: "none",
+    padding: 10,
+    borderRadius: 10,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  sellBtn: {
+    flex: 1,
+    background: "#111",
+    border: "1px solid #222",
+    padding: 10,
+    borderRadius: 10,
+    color: "#fff",
+    cursor: "pointer",
   },
   backdrop: {
     position: "fixed",
@@ -259,9 +329,7 @@ const styles = {
     width: 64,
     height: 64,
     borderRadius: 12,
-    objectFit: "cover",
     marginBottom: 8,
-    border: "1px solid #222",
   },
   confirm: {
     width: "100%",
